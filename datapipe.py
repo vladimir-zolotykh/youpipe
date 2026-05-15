@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # PYTHON_ARGCOMPLETE_OK
-from typing import Union, Iterator, TextIO, BinaryIO
+from typing import Iterator, TextIO
 import os
 import re
 import gzip
 import bz2
-
-FileIO = Union[BinaryIO, TextIO]
 
 
 def iter_logfile(top, pat: str) -> Iterator[str]:
@@ -22,9 +20,9 @@ def iter_logfile(top, pat: str) -> Iterator[str]:
                 yield os.path.join(dir, name)
 
 
-def iter_handle(logfiles: Iterator[str]) -> Iterator[FileIO]:
+def iter_handle(logfiles: Iterator[str]) -> Iterator[TextIO]:
     for log in logfiles:
-        fd: FileIO
+        fd: TextIO
         if log.endswith(".gz"):
             fd = gzip.open(log, "rt")
         elif log.endswith(".bz2"):
@@ -34,7 +32,7 @@ def iter_handle(logfiles: Iterator[str]) -> Iterator[FileIO]:
         yield fd
 
 
-def iter_line(log_hadle: Iterator[FileIO]) -> Iterator[str]:
+def iter_line(log_hadle: Iterator[TextIO]) -> Iterator[str]:
     for h in log_hadle:
         yield from h
 
