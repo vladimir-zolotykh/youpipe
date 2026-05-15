@@ -6,6 +6,8 @@ import os
 import re
 import gzip
 import bz2
+import argparse
+import argcomplete
 
 
 def iter_logfile(top, pat: str = "") -> Iterator[str]:
@@ -54,11 +56,31 @@ def count_bytes(lines: Iterator[str]) -> int:
     return total
 
 
+parser = argparse.ArgumentParser(
+    description="Configure datapipe",
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+)
+parser.add_argument("--include-files", default="", help="include file")
+parser.add_argument("--include-lines", default="", help="include line")
+parser.add_argument(
+    "--action",
+    nargs="+",
+    choices=["print", "count-bytes"],
+    default="print",
+    help="select action",
+)
+parser.add_argument("top_dir", default="www", help="root dir of log files tree")
+
 if __name__ == "__main__":
-    logfiles = iter_logfile("www", "access-log")
+    argcomplete.autocomplete(parser)
+    args = parser.parse_args()
+    # logfiles = iter_logfile("www", "access-log")
+    logfiles = iter_logfile(args.top_dir, args.include_files)
     handles = iter_handle(logfiles)
     lines = iter_line(handles)
-    selected_lines = iter_select(lines)  # , "156.63.68.202")
-    # for line in selected_lines:
-    #     print(line, end="")
-    print(count_bytes(selected_lines))
+    selected_lines = iter_select(lines, args.include_lines)  # , "156.63.68.202")
+    if "print" in args.action:
+        for line in selected_lines:
+            print(line, end="")
+    else:
+        print(count_bytes(selected_lines))
