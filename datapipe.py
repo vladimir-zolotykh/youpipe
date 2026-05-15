@@ -49,6 +49,6 @@ if __name__ == "__main__":
     logfiles = iter_logfile("www", "access-log")
     handles = iter_handle(logfiles)
     lines = iter_line(handles)
-    selected_lines = iter_select(lines, "bookplug.gif")
+    selected_lines = iter_select(lines, "156.63.68.202")
     for line in selected_lines:
         print(line, end="")
