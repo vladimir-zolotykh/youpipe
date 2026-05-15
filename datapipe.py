@@ -8,7 +8,7 @@ import gzip
 import bz2
 
 
-def iter_logfile(top, pat: str) -> Iterator[str]:
+def iter_logfile(top, pat: str = "") -> Iterator[str]:
     """Iterate logfiles
     www/bar/access-log-0208.bz2
     www/bar/access-log
@@ -16,7 +16,7 @@ def iter_logfile(top, pat: str) -> Iterator[str]:
     """
     for dir, _, names in os.walk(top):
         for name in names:
-            if re.match(pat, name):
+            if not pat or re.match(pat, name):
                 yield os.path.join(dir, name)
 
 
