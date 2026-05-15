@@ -37,9 +37,9 @@ def iter_line(log_hadle: Iterator[TextIO]) -> Iterator[str]:
         yield from h
 
 
-def iter_select(lines: Iterator[str], pat: str) -> Iterator[str]:
+def iter_select(lines: Iterator[str], pat: str = "") -> Iterator[str]:
     for line in lines:
-        if re.search(pat, line):
+        if not pat or re.search(pat, line):
             yield line
 
 
@@ -47,6 +47,6 @@ if __name__ == "__main__":
     logfiles = iter_logfile("www", "access-log")
     handles = iter_handle(logfiles)
     lines = iter_line(handles)
-    selected_lines = iter_select(lines, "156.63.68.202")
+    selected_lines = iter_select(lines)  # , "156.63.68.202")
     for line in selected_lines:
         print(line, end="")
