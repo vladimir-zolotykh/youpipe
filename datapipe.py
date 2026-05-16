@@ -9,8 +9,12 @@ import bz2
 import argparse
 import argcomplete
 
+IterPath = Iterator[str]
+IterLine = Iterator[str]
+IterHandle = Iterator[TextIO]
 
-def iter_logfile(top, pat: str = "") -> Iterator[str]:
+
+def iter_logfile(top, pat: str = "") -> IterPath:
     """Iterate logfiles
     www/bar/access-log-0208.bz2
     www/bar/access-log
@@ -22,7 +26,7 @@ def iter_logfile(top, pat: str = "") -> Iterator[str]:
                 yield os.path.join(dir, name)
 
 
-def iter_handle(logfiles: Iterator[str]) -> Iterator[TextIO]:
+def iter_handle(logfiles: IterPath) -> IterHandle:
     for log in logfiles:
         fd: TextIO
         if log.endswith(".gz"):
@@ -34,18 +38,18 @@ def iter_handle(logfiles: Iterator[str]) -> Iterator[TextIO]:
         yield fd
 
 
-def iter_line(log_hadle: Iterator[TextIO]) -> Iterator[str]:
+def iter_line(log_hadle: IterHandle) -> IterLine:
     for h in log_hadle:
         yield from h
 
 
-def iter_select(lines: Iterator[str], pat: str = "") -> Iterator[str]:
+def iter_select(lines: IterLine, pat: str = "") -> IterLine:
     for line in lines:
         if not pat or re.search(pat, line):
             yield line
 
 
-def count_bytes(lines: Iterator[str]) -> int:
+def count_bytes(lines: IterLine) -> int:
     total: int = 0
     for line in lines:
         try:
@@ -75,10 +79,12 @@ if __name__ == "__main__":
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
     # logfiles = iter_logfile("www", "access-log")
-    logfiles = iter_logfile(args.top_dir, args.include_files)
-    handles = iter_handle(logfiles)
-    lines = iter_line(handles)
-    selected_lines = iter_select(lines, args.include_lines)  # , "156.63.68.202")
+    logfiles: IterPath = iter_logfile(args.top_dir, args.include_files)
+    handles: IterHandle = iter_handle(logfiles)
+    lines: IterLine = iter_line(handles)
+    selected_lines: IterLine = iter_select(
+        lines, args.include_lines
+    )  # , "156.63.68.202")
     if "print" in args.action:
         for line in selected_lines:
             print(line, end="")
