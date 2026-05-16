@@ -4,6 +4,7 @@
 from typing import Iterator, TextIO
 import os
 import re
+import itertools
 import gzip
 import bz2
 import argparse
@@ -69,9 +70,9 @@ parser.add_argument("--include-files", default="", help="include file")
 parser.add_argument("--include-lines", default="", help="include line")
 parser.add_argument(
     "--action",
-    nargs="+",
+    action="append",
     choices=["print", "count-bytes"],
-    default="print",
+    default=[],
     help="select action",
 )
 parser.add_argument("top_dir", default="www", help="root dir of log files tree")
@@ -82,9 +83,10 @@ if __name__ == "__main__":
     logfiles: IterPath = find_logs(args.top_dir, args.include_files)
     handles: IterHandle = open_files(logfiles)
     lines: IterLine = read_lines(handles)
-    selected_lines: IterLine = filter_lines(lines, args.include_lines)
+    filtered_lines: IterLine = filter_lines(lines, args.include_lines)
+    lines1, lines2 = itertools.tee(filtered_lines, 2)
     if "print" in args.action:
-        for line in selected_lines:
+        for line in lines1:
             print(line, end="")
-    else:
-        print(count_bytes(selected_lines))
+    if "count-bytes" in args.action:
+        print(count_bytes(lines2))
