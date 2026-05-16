@@ -85,8 +85,9 @@ if __name__ == "__main__":
     lines: IterLine = read_lines(handles)
     filtered_lines: IterLine = filter_lines(lines, args.include_lines)
     lines1, lines2 = itertools.tee(filtered_lines, 2)
-    if "print" in args.action:
-        for line in lines1:
-            print(line, end="")
-    if "count-bytes" in args.action:
-        print(count_bytes(lines2))
+    for action in args.action:
+        if action == "print":
+            for line in lines1:
+                print(line, end="")
+        else:
+            print(count_bytes(lines2))
