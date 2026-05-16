@@ -7,14 +7,15 @@ import re
 import gzip
 import bz2
 import argparse
+from pathlib import Path
 import argcomplete
 
-IterPath = Iterator[str]
+IterPath = Iterator[Path]
 IterLine = Iterator[str]
 IterHandle = Iterator[TextIO]
 
 
-def iter_logfile(top, pat: str = "") -> IterPath:
+def find_logs(top, pat: str = "") -> IterPath:
     """Iterate logfiles
     www/bar/access-log-0208.bz2
     www/bar/access-log
@@ -23,27 +24,27 @@ def iter_logfile(top, pat: str = "") -> IterPath:
     for dir, _, names in os.walk(top):
         for name in names:
             if not pat or re.match(pat, name):
-                yield os.path.join(dir, name)
+                yield Path(dir) / name
 
 
-def iter_handle(logfiles: IterPath) -> IterHandle:
+def open_files(logfiles: IterPath) -> IterHandle:
     for log in logfiles:
         fd: TextIO
-        if log.endswith(".gz"):
+        if log.suffix == ".gz":
             fd = gzip.open(log, "rt")
-        elif log.endswith(".bz2"):
+        elif log.suffix == ".bz2":
             fd = bz2.open(log, "rt")
         else:
             fd = open(log, "rt")
         yield fd
 
 
-def iter_line(log_hadle: IterHandle) -> IterLine:
-    for h in log_hadle:
+def read_lines(log_handle: IterHandle) -> IterLine:
+    for h in log_handle:
         yield from h
 
 
-def iter_select(lines: IterLine, pat: str = "") -> IterLine:
+def filter_lines(lines: IterLine, pat: str = "") -> IterLine:
     for line in lines:
         if not pat or re.search(pat, line):
             yield line
@@ -78,13 +79,10 @@ parser.add_argument("top_dir", default="www", help="root dir of log files tree")
 if __name__ == "__main__":
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
-    # logfiles = iter_logfile("www", "access-log")
-    logfiles: IterPath = iter_logfile(args.top_dir, args.include_files)
-    handles: IterHandle = iter_handle(logfiles)
-    lines: IterLine = iter_line(handles)
-    selected_lines: IterLine = iter_select(
-        lines, args.include_lines
-    )  # , "156.63.68.202")
+    logfiles: IterPath = find_logs(args.top_dir, args.include_files)
+    handles: IterHandle = open_files(logfiles)
+    lines: IterLine = read_lines(handles)
+    selected_lines: IterLine = filter_lines(lines, args.include_lines)
     if "print" in args.action:
         for line in selected_lines:
             print(line, end="")
