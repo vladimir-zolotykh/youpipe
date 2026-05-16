@@ -37,7 +37,8 @@ def open_files(logfiles: IterPath) -> IterHandle:
             fd = bz2.open(log, "rt")
         else:
             fd = open(log, "rt")
-        yield fd
+        with fd:
+            yield fd
 
 
 def read_lines(log_handle: IterHandle) -> IterLine:
@@ -85,9 +86,14 @@ if __name__ == "__main__":
     lines: IterLine = read_lines(handles)
     filtered_lines: IterLine = filter_lines(lines, args.include_lines)
     lines1, lines2 = itertools.tee(filtered_lines, 2)
-    for action in args.action:
-        if action == "print":
-            for line in lines1:
-                print(line, end="")
-        else:
-            print(count_bytes(lines2))
+    try:
+        for action in args.action:
+            if action == "print":
+                for line in lines1:
+                    print(line, end="")
+            else:
+                print(count_bytes(lines2))
+    except KeyboardInterrupt:
+        exit(1)
+    except BrokenPipeError:
+        pass
